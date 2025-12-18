@@ -1,0 +1,39 @@
+name: Daily Auto-Commit
+
+# Izinkan workflow untuk menulis ke repo
+permissions:
+  contents: write
+
+on:
+  schedule:
+    # Atur waktu: 23:55 WIB = 16:55 UTC
+    - cron: '55 16 * * *'
+  workflow_dispatch: # Agar kamu bisa jalankan manual juga
+
+jobs:
+  auto-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.MY_GITHUB_TOKEN }} # Gunakan PAT kamu dari secrets
+
+    - name: Create and Commit Log File
+      run: |
+        # Buat file log dengan timestamp
+        LOG_FILE="log_$(date +%Y-%m-%d_%H-%M-%S).txt"
+        echo "Auto-commit on $(date)" > "$LOG_FILE"
+
+        # Set git config (penting untuk bisa commit)
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+        # Git commands
+        git add "$LOG_FILE"
+        git commit -m "Auto-commit: $LOG_FILE" || exit 0  # Jika tidak ada perubahan, jangan error
+        git push
+
+    - name: Report Success
+      run: echo "Auto-commit completed successfully!"
